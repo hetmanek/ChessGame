@@ -5,7 +5,6 @@ import enums.PieceType;
 import java.util.ArrayList;
 
 public class King extends Piece {
-
     public King(ArrayList<Integer> coordinate, boolean isWhite, PieceType pieceType) {
         super(coordinate, isWhite, pieceType);
     }

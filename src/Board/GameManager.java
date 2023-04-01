@@ -6,29 +6,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GameManager {
-    private JFrame frame;
-    private JPanel panel;
-    private JButton chooseNewGame;
-    private JLabel chooseFENLabel;
-    private JTextField chooseFENText;
-    private JButton chooseFENButton;
+    private final JFrame frame;
+    private final JTextField chooseFENText;
     private final Object[] options = {"Play as White", "Play as Black"};
-
 
     public GameManager() {
         this.frame = new JFrame("Hetmachess");
 
         this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        this.panel = new JPanel();
+        JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 
-        this.chooseNewGame = new JButton("Start a new game");
+        JButton chooseNewGame = new JButton("Start a new game");
         chooseNewGame.addActionListener(this::startNewGame);
 
-        this.chooseFENLabel = new JLabel("Start by FEN");
+        JLabel chooseFENLabel = new JLabel("Start by FEN");
         this.chooseFENText = new JTextField(35);
-        this.chooseFENButton = new JButton("Load FEN");
+        JButton chooseFENButton = new JButton("Load FEN");
         chooseFENButton.addActionListener(this::startByFEN);
 
         panel.add(chooseNewGame);

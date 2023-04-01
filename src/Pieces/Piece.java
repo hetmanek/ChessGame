@@ -3,12 +3,12 @@ package Pieces;
 import enums.PieceType;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public abstract class Piece {
-    private ArrayList<Integer> coordinate;
-    private final boolean isWhite;
-    private final PieceType type;
+    protected ArrayList<Integer> coordinate;
+    protected final boolean isWhite;
+    protected final PieceType type;
+    protected boolean moved = false;
 
     public Piece(ArrayList<Integer> coordinate, boolean isWhite, PieceType type) {
         this.coordinate = coordinate;
@@ -20,14 +20,22 @@ public abstract class Piece {
         return this.type.getImageIndex();
     }
 
+    public void setCoordinate(ArrayList<Integer> coordinate) {
+        this.coordinate = coordinate;
+        this.moved = true;
+    }
+
     public ArrayList<Integer> getCoordinate() {
         return coordinate;
     }
+
     public boolean isWhite() {
         return this.isWhite;
     }
 
+    public boolean hasMoved() {
+        return this.moved;
+    }
+
     public abstract ArrayList<ArrayList<Integer>> validMoves();
-
-
 }

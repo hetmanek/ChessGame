@@ -5,7 +5,6 @@ import enums.PieceType;
 import java.util.ArrayList;
 
 public class Bishop extends Piece {
-
     public Bishop(ArrayList<Integer> coordinate, boolean isWhite, PieceType pieceType) {
         super(coordinate, isWhite, pieceType);
     }

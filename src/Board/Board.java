@@ -7,62 +7,70 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
-
-//TODO implementar visao das negra via asWhite
 public class Board {
-    private JFrame frame;
-    private JPanel panel;
-    private Image[] images = pieceImages();
+    private final JFrame frame;
+    private final JPanel panel;
+    private final Image[] images;
+    private final int scale = 96;
     private Piece selectedPiece = null;
+    private boolean flag;
+
 
     public Board(String startAs, boolean asWhite) {
+        this.images = pieceImages();
         this.frame = new JFrame("Hetmachess");
         this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.frame.setBounds(20, 20, 768, 791);
+        this.frame.setBounds(20, 20, (int) (8.177 * this.scale), (int) (8.415 * this.scale));
         Position position = new Position(startAs);
         this.panel = new JPanel() {
             @Override
             public void paint(Graphics g) {
-                squareColor(g);
-                drawPosition(position.getPositionMap(), g);
+                if (asWhite) {
+                    squareColor(g);
+                    drawPosition(position.getPositionMap(), g);
+                } else {
+                    squareColor(g);
+                    drawPosition(rotateBoard(position.getPositionMap()), g);
+                }
             }
         };
         frame.add(panel);
         frame.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                ArrayList<Integer> coordinate = new ArrayList<>() {
-                    {
-                        add(e.getY() / 94);
-                        add(e.getX() / 94);
+                selectedPiece = position.getPieceAt(arrayListCoordinate(getPanelY(e, asWhite), getPanelX(e, asWhite)));
+                if (selectedPiece != null && turnToPlay(selectedPiece, position)) {
+                    for (ArrayList<Integer> realValidMove : position.realValidMoves(selectedPiece, false)) {
+                        if (asWhite) {
+                            drawRealValidMoves(realValidMove, panel.getGraphics());
+                        } else {
+                            drawRealValidMoves(rotateValidMoves(realValidMove), panel.getGraphics());
+                        }
+                        flag = true;
                     }
-                };
-                selectedPiece = position.getPieceAt(coordinate);
-                if (selectedPiece != null) {
-                    //TODO HIGHLIGTH POSSIBLE MOVES
-                    System.out.println(selectedPiece.validMoves());
                 }
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                List<Integer> coordinate = new ArrayList<>();
-                coordinate.add(e.getY() / 94);
-                coordinate.add(e.getX() / 94);
-//                selectedPiece.moveTo(coordinate);
-                frame.repaint();
+                if (flag && selectedPiece != null) {
+                    position.movePiece(selectedPiece, arrayListCoordinate(getPanelY(e, asWhite), getPanelX(e, asWhite)));
+                    System.out.println(selectedPiece + "  :  " + selectedPiece.getCoordinate()); //TODO
+                    frame.repaint();
+                    selectedPiece = null;
+                    flag = false;
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
             }
 
             @Override
@@ -71,23 +79,6 @@ public class Board {
 
             @Override
             public void mouseExited(MouseEvent e) {
-            }
-        });
-        frame.addMouseMotionListener(new MouseMotionListener() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                if (selectedPiece != null) {
-                    List<Integer> coordinate = new ArrayList<>();
-                    coordinate.add(e.getY() / 94);
-                    coordinate.add(e.getX() / 94);
-                    //TODO ARRASTA A PEÇA
-//                    selectedPiece.setCoordinate(coordinate);
-                    frame.repaint();
-                }
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent e) {
             }
         });
         frame.setVisible(true);
@@ -101,7 +92,7 @@ public class Board {
                 } else {
                     g.setColor(new Color(150, 77, 34));
                 }
-                g.fillRect(row * 94, column * 94, 94, 94);
+                g.fillRect(row * this.scale, column * this.scale, this.scale, this.scale);
             }
         }
     }
@@ -113,7 +104,7 @@ public class Board {
             int index = 0;
             for (int y = 0; y < 400; y += 200) {
                 for (int x = 0; x < 1200; x += 200) {
-                    images[index] = imagePieces.getSubimage(x, y, 200, 200).getScaledInstance(94, 94, BufferedImage.SCALE_SMOOTH);
+                    images[index] = imagePieces.getSubimage(x, y, 200, 200).getScaledInstance(this.scale, this.scale, BufferedImage.SCALE_SMOOTH);
                     index++;
                 }
             }
@@ -126,8 +117,53 @@ public class Board {
     private void drawPosition(Map<ArrayList<Integer>, Piece> positionMap, Graphics g) {
         positionMap.forEach((k, v) -> {
                     if (v != null)
-                        g.drawImage(this.images[v.getImageIndex()], k.get(1) * 94, k.get(0) * 94, this.panel);
+                        g.drawImage(this.images[v.getImageIndex()], k.get(1) * this.scale, k.get(0) * this.scale, this.panel);
                 }
         );
+    }
+
+    private Image movesCircle() {
+        try {
+            Image image = ImageIO.read(new File("C:\\Users\\kaiov\\IdeaProjects\\ChessGame\\src\\circle.png"));
+            image = image.getScaledInstance(this.scale / 2, this.scale / 2, BufferedImage.SCALE_SMOOTH);
+            return image;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void drawRealValidMoves(ArrayList<Integer> realValidMove, Graphics g) {
+        g.drawImage(movesCircle(), (realValidMove.get(1)) * this.scale + (this.scale / 4), realValidMove.get(0) * this.scale + (this.scale / 4), this.panel);
+    }
+
+    private Map<ArrayList<Integer>, Piece> rotateBoard(Map<ArrayList<Integer>, Piece> position) {
+        Map<ArrayList<Integer>, Piece> rotatedPosition = new HashMap<>();
+        position.forEach((k, v) -> {
+            rotatedPosition.put(arrayListCoordinate(7 - k.get(0), 7 - k.get(1)), v);
+        });
+        return rotatedPosition;
+    }
+
+    private ArrayList<Integer> rotateValidMoves(ArrayList<Integer> validMoves) {
+        return arrayListCoordinate(7 - validMoves.get(0), 7 - validMoves.get(1));
+    }
+
+    private int getPanelX(MouseEvent e, boolean asWhite) {
+        return asWhite ? e.getX() / this.scale : 7 - (e.getX() / this.scale);
+    }
+
+    private int getPanelY(MouseEvent e, boolean asWhite) {
+        return asWhite ? e.getY() / this.scale : 7 - (e.getY() / this.scale);
+    }//TODO TA MUITO DESLOCADO O EIXO Y
+
+    private boolean turnToPlay(Piece piece, Position position) {
+        return position.isTurn() == piece.isWhite();
+    }
+
+    private ArrayList<Integer> arrayListCoordinate(int row, int column) {
+        ArrayList<Integer> coordinate = new ArrayList<>();
+        coordinate.add(row);
+        coordinate.add(column);
+        return coordinate;
     }
 }

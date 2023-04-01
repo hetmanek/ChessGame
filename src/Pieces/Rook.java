@@ -1,9 +1,10 @@
 package Pieces;
 
 import enums.PieceType;
+
 import java.util.ArrayList;
 
-public class Rook extends Piece{
+public class Rook extends Piece {
     public Rook(ArrayList<Integer> coordinate, boolean isWhite, PieceType pieceType) {
         super(coordinate, isWhite, pieceType);
     }
@@ -15,7 +16,7 @@ public class Rook extends Piece{
         Integer currentColumn = this.getCoordinate().get(1);
         for (int row = 0; row < 8; row++) {
             for (int column = 0; column < 8; column++) {
-                if ((currentRow == row) ^ (currentColumn==column)) {
+                if ((currentRow == row) ^ (currentColumn == column)) {
                     int finalRow = row;
                     int finalColumn = column;
                     validMovesList.add(new ArrayList<>() {
