@@ -10,7 +10,7 @@ public class Knight extends Piece {
     }
 
     @Override
-    public ArrayList<ArrayList<Integer>> validMoves() {
+    public ArrayList<ArrayList<Integer>> validMoves() {//TODO DE REPENTE DA PRA FAZER MELHOR ESSES MOVES AQUI, TÁ MUITO MANUAL...
         ArrayList<ArrayList<Integer>> validMovesList = new ArrayList<>();
         Integer currentRow = this.getCoordinate().get(0);
         Integer currentColumn = this.getCoordinate().get(1);

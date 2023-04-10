@@ -6,12 +6,12 @@ import enums.PieceType;
 import java.util.*;
 
 public class Position {
-    private Map<ArrayList<Integer>, Piece> positionMap = new HashMap<>();
+    private Map<ArrayList<Integer>, Piece> positionMap = new HashMap<>(); //TODO É FINAL??
+    private Map<Integer, ArrayList<Integer>> enPassantMap = new HashMap<>(); //TODO É FINAL??
     private boolean turn; // true white, false black
     private int move = 0;
-    private int halfmove;
+    private int halfmove; //TODO DRAW RULE
     private int fullmove;
-    private Map<Integer, ArrayList<Integer>> enPassantMap = new HashMap<>();
     private ArrayList<Integer> whiteKingCoordinate;
     private ArrayList<Integer> blackKingCoordinate;
 
@@ -19,11 +19,10 @@ public class Position {
         char[] fenArray = fen.toCharArray();
         int row = 0;
         int column = 0;
-        boolean firstFieldFlag = false;
         int fenField = 0;
         for (char character : fenArray) {
             //fen ex: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-            if (!firstFieldFlag) {
+            if (fenField == 0) {
                 if (charIsANumber(character)) {
                     column = column + charToInt(character);
                 } else if (charIsALetter(character)) {
@@ -33,29 +32,30 @@ public class Position {
                     row++;
                     column = 0;
                 }
-                if (row == 7 && column == 8) firstFieldFlag = true;
+                if (row == 7 && column == 8) fenField++;
             } else {
                 if (charIsASpace(character)) {
                     fenField++;
                 } else {
-                    if (fenField == 1) {
+                    if (fenField == 2) {
                         this.turn = charIsAw(character);
-                    } else if (fenField == 2 && charIsNotADash(character)) {
-                        //TODO tem que fazer o rock...
-                        //quem pode rockar
-                        // - == ninguem
-                        // Qk == branca pode para ala da dama e preta pode para ala do rei
-                        // KQkq == pode tudo
                     } else if (fenField == 3 && charIsNotADash(character)) {
+                        switch (character) {
+                            case 'Q' -> ((King) getPieceAt(whiteKingCoordinate)).setCastlingRights(0, true);
+                            case 'K' -> ((King) getPieceAt(whiteKingCoordinate)).setCastlingRights(1, true);
+                            case 'q' -> ((King) getPieceAt(blackKingCoordinate)).setCastlingRights(0, true);
+                            case 'k' -> ((King) getPieceAt(blackKingCoordinate)).setCastlingRights(1, true);
+                        }
+                    } else if (fenField == 4 && charIsNotADash(character)) {
                         if (charIsALetter(character)) row = charToRow(character);
                         if (charIsANumber(character)) {
                             column = charToColumn(character);
-                            this.enPassantMap.put(this.fullmove, arrayListCoordinate(row, column));
+                            this.enPassantMap.put(this.fullmove, arrayListCoordinate(row, column)); //todo kk
                         }
-                    } else if (fenField == 4) {
-                        this.halfmove = charToInt(character);
                     } else if (fenField == 5) {
-                        this.fullmove = charToInt(character);
+                        this.halfmove = charToInt(character);
+                    } else if (fenField == 6) {
+                        this.fullmove = charToInt(character); //todo ah... kk olha ali ^
                     }
                 }
             }
@@ -103,11 +103,17 @@ public class Position {
 
     public void movePiece(Piece piece, ArrayList<Integer> destination) {//TODO NÃO SEI COMO CLENAR ISSO AQUI
         if (piece.isWhite() == this.turn && realValidMoves(piece, false).stream().anyMatch(destination::equals)) {
-            if (piece.getClass() == Pawn.class) enPassant(piece, destination);
+            if (piece.getClass() == Pawn.class) {
+                enPassant(piece, destination);
+                piece = promotion(piece, destination);
+            }
             if (piece.getClass() == King.class) {
+                ((King) piece).setCastlingRights(0, false);
+                ((King) piece).setCastlingRights(1, false);
                 if (piece.isWhite()) {
                     this.whiteKingCoordinate = destination;
                 } else this.blackKingCoordinate = destination;
+                castle(piece, destination);
             }
 
             this.positionMap.remove(piece.getCoordinate());
@@ -122,9 +128,9 @@ public class Position {
 
     public ArrayList<ArrayList<Integer>> realValidMoves(Piece piece, boolean flag) {
         ArrayList<ArrayList<Integer>> validMoves = new ArrayList<>(piece.validMoves());
+
         validMoves.removeIf(x -> isAnAlliedPiece(piece, x));
         validMoves.removeIf(this::isOutOfBounds);
-
         if (piece.getClass() != Knight.class) {
             validMoves.removeIf(x -> hasPieceBetween(piece.getCoordinate(), x));
         }
@@ -132,11 +138,11 @@ public class Position {
             validMoves.removeIf(x -> pawnConstraint(piece.getCoordinate(), x));
         }
         if (piece.getClass() == King.class) {
-            validMoves.removeIf(x -> isDestinationUnderAttack(piece.isWhite(), x, this.positionMap));
+            validMoves.removeIf(x -> kingConstraint(piece, x));
+
         }
         if (!flag && isKingInCheck(piece.isWhite(), this.positionMap)) {
-            System.out.println("teu rei tá em cheque");
-            validMoves.removeIf(x -> !moveResolvesCheck(piece, x)); //todo mds o primeiro bug surgio tudo antes disso tá funcionando
+            validMoves.removeIf(x -> !moveResolvesCheck(piece, x));
         }
         return validMoves;
     }
@@ -187,7 +193,7 @@ public class Position {
         if ((Math.abs(exitPoint.get(0) - destination.get(0)) == Math.abs(exitPoint.get(1) - destination.get(1)))) {//é um movimento diagonal(kill move)
             if (getPieceAt(destination) == null) {
                 return !canEnPassant(destination);
-            }
+            } else return false;
         } else if (Math.abs(exitPoint.get(0) - destination.get(0)) == 2) { //first move
             return getPieceAt(exitPoint).hasMoved();
         }
@@ -206,9 +212,18 @@ public class Position {
         if (Math.abs(piece.getCoordinate().get(0) - destination.get(0)) == 2) { //leap
             this.enPassantMap.put(this.move, arrayListCoordinate(destination.get(0) - k, destination.get(1)));
         }
-        if (getPieceAt(destination) == null && (Math.abs(piece.getCoordinate().get(0) - destination.get(0)) == Math.abs(piece.getCoordinate().get(1) - destination.get(1)))) {
+        if (getPieceAt(destination) == null
+                && (Math.abs(piece.getCoordinate().get(0) - destination.get(0)) == Math.abs(piece.getCoordinate().get(1) - destination.get(1)))) {
             this.positionMap.remove(arrayListCoordinate(destination.get(0) - k, destination.get(1)));
         }
+    }
+
+    private Piece promotion(Piece pawn, ArrayList<Integer> destination) {
+        if (destination.get(0) == 0 || destination.get(0) == 7) {
+            char character = pawn.isWhite() ? 'Q' : 'q';
+            pawn = new Queen(pawn.getCoordinate(), pawn.isWhite(), PieceType.valueOf(String.valueOf(character)));
+        }
+        return pawn;
     }
 
     private boolean isDestinationUnderAttack(Boolean isWhite, ArrayList<Integer> destination, Map<ArrayList<Integer>, Piece> positionMap) { //TODO funciona...mas tá feio
@@ -227,7 +242,7 @@ public class Position {
                         return true;
                     }
                     //compara com todos os moves do rei, pois tentase comparar com realvalidmoves entraria em um loop infinito
-                } else if (pieceInMap.getClass() == King.class) {
+                } else if (pieceInMap.getClass() == King.class) { //TODO TA ERRADO ISSO AQUI, O REI N PODE CAPTURAR UMA PEÇA DEFENDIDA...
                     if (pieceInMap.validMoves()
                             .stream()
                             .anyMatch(destination::equals)) {
@@ -243,13 +258,13 @@ public class Position {
         return false;
     }
 
-    public boolean isKingInCheck(boolean isWhite, Map<ArrayList<Integer>, Piece> positionMap) { //TODO TÁ SÓ A ITERAÇÃO ESSES MÉTODOS DE REI
+    private boolean isKingInCheck(boolean isWhite, Map<ArrayList<Integer>, Piece> positionMap) { //TODO TÁ SÓ A ITERAÇÃO ESSES MÉTODOS DE REI
         ArrayList<Integer> kingCoordinate = isWhite ? this.whiteKingCoordinate : this.blackKingCoordinate;
         return isDestinationUnderAttack(isWhite, kingCoordinate, positionMap);
     }
 
     private boolean moveResolvesCheck(Piece pieceToMove, ArrayList<Integer> destination) {
-        Map<ArrayList<Integer>, Piece> positionCopy = this.positionMap;
+        Map<ArrayList<Integer>, Piece> positionCopy = new HashMap<>(this.positionMap);
 
         positionCopy.remove(pieceToMove.getCoordinate());
         positionCopy.put(destination, pieceToMove);
@@ -260,8 +275,60 @@ public class Position {
         } else {
             kingCoordinate = pieceToMove.isWhite() ? this.whiteKingCoordinate : this.blackKingCoordinate;
         }
-
         return !isDestinationUnderAttack(pieceToMove.isWhite(), kingCoordinate, positionCopy);
+    }
+
+    private boolean kingConstraint(Piece king, ArrayList<Integer> destination) {
+        if (isDestinationUnderAttack(king.isWhite(), destination, this.positionMap)) return true;
+        if (Math.abs(king.getCoordinate().get(1) - destination.get(1)) == 2) {//é roque
+            return !canCastle(king, destination);
+        }
+        return false;
+    }
+
+    private boolean canCastle(Piece king, ArrayList<Integer> destination) {//TODO talvez o if else repetindo codigo tá cringe
+        if (king.getCoordinate().get(1) - destination.get(1) > 0) {//ala da dana
+            ArrayList<Integer> rookCoordinate = arrayListCoordinate(king.getCoordinate().get(0), king.getCoordinate().get(1) - 4);
+            if (!getPieceAt(rookCoordinate).hasMoved() && !hasPieceBetween(king.getCoordinate(), rookCoordinate)) {
+                for (int column = king.getCoordinate().get(1); column != rookCoordinate.get(1); column--) {
+                    if (isDestinationUnderAttack(king.isWhite(), arrayListCoordinate(king.getCoordinate().get(0), column), this.positionMap)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        } else {//ala do rei
+            ArrayList<Integer> rookCoordinate = arrayListCoordinate(king.getCoordinate().get(0), king.getCoordinate().get(1) + 3);
+            if (!getPieceAt(rookCoordinate).hasMoved() && !hasPieceBetween(king.getCoordinate(), rookCoordinate)) {
+                for (int column = king.getCoordinate().get(1); column != rookCoordinate.get(1); column++) {
+                    if (isDestinationUnderAttack(king.isWhite(), arrayListCoordinate(king.getCoordinate().get(0), column), this.positionMap)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void castle(Piece king, ArrayList<Integer> destination) { //TODO talvez o if else repetindo codigo tá cringe
+        if (Math.abs(king.getCoordinate().get(1) - destination.get(1)) == 2) {
+            if (king.getCoordinate().get(1) - destination.get(1) > 0) {//ala da dana
+                ArrayList<Integer> rookCoordinate = arrayListCoordinate(king.getCoordinate().get(0), king.getCoordinate().get(1) - 4);
+                ArrayList<Integer> rookDestination = arrayListCoordinate(king.getCoordinate().get(0), king.getCoordinate().get(1) - 1);
+                Piece rook = getPieceAt(rookCoordinate);
+                this.positionMap.remove(rookCoordinate);
+                rook.setCoordinate(rookDestination);
+                this.positionMap.put(rook.getCoordinate(), rook);
+            } else {//ala do rei
+                ArrayList<Integer> rookCoordinate = arrayListCoordinate(king.getCoordinate().get(0), king.getCoordinate().get(1) + 3);
+                ArrayList<Integer> rookDestination = arrayListCoordinate(king.getCoordinate().get(0), king.getCoordinate().get(1) + 1);
+                Piece rook = getPieceAt(rookCoordinate);
+                this.positionMap.remove(rookCoordinate);
+                rook.setCoordinate(rookDestination);
+                this.positionMap.put(rook.getCoordinate(), rook);
+            }
+        }
     }
 
     private boolean charIsANumber(char character) {

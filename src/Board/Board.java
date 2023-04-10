@@ -14,13 +14,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+
 public class Board {
+    private static final String CIRCLE_FILE_PATH = "src/circle.png";
+    private static final String CHESS_FILE_PATH = "src/chess.png";
     private final JFrame frame;
     private final JPanel panel;
     private final Image[] images;
     private final int scale = 96;
     private Piece selectedPiece = null;
-    private boolean flag;
+    private boolean clickFlag;
 
 
     public Board(String startAs, boolean asWhite) {
@@ -32,41 +35,35 @@ public class Board {
         this.panel = new JPanel() {
             @Override
             public void paint(Graphics g) {
-                if (asWhite) {
-                    squareColor(g);
-                    drawPosition(position.getPositionMap(), g);
-                } else {
-                    squareColor(g);
-                    drawPosition(rotateBoard(position.getPositionMap()), g);
-                }
+                squareColor(g);
+                drawPosition(boardOrientation(position.getPositionMap(), asWhite), g);
             }
         };
+
         frame.add(panel);
         frame.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                selectedPiece = position.getPieceAt(arrayListCoordinate(getPanelY(e, asWhite), getPanelX(e, asWhite)));
-                if (selectedPiece != null && turnToPlay(selectedPiece, position)) {
-                    for (ArrayList<Integer> realValidMove : position.realValidMoves(selectedPiece, false)) {
-                        if (asWhite) {
-                            drawRealValidMoves(realValidMove, panel.getGraphics());
-                        } else {
-                            drawRealValidMoves(rotateValidMoves(realValidMove), panel.getGraphics());
+                if (!clickFlag) {
+                    selectedPiece = position.getPieceAt(arrayListCoordinate(getPanelY(e, asWhite), getPanelX(e, asWhite)));
+                    if (selectedPiece != null && turnToPlay(selectedPiece, position)) {
+                        for (ArrayList<Integer> realValidMove : position.realValidMoves(selectedPiece, false)) {
+                            highlightRealValidMoves(realValidMoveOrientation(realValidMove, asWhite), panel.getGraphics());
                         }
-                        flag = true;
+                        clickFlag = true;
+                    }
+                } else {
+                    if (selectedPiece != null) {
+                        position.movePiece(selectedPiece, arrayListCoordinate(getPanelY(e, asWhite), getPanelX(e, asWhite)));
+                        frame.repaint();
+                        selectedPiece = null;
+                        clickFlag = false;
                     }
                 }
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (flag && selectedPiece != null) {
-                    position.movePiece(selectedPiece, arrayListCoordinate(getPanelY(e, asWhite), getPanelX(e, asWhite)));
-                    System.out.println(selectedPiece + "  :  " + selectedPiece.getCoordinate()); //TODO
-                    frame.repaint();
-                    selectedPiece = null;
-                    flag = false;
-                }
             }
 
             @Override
@@ -99,7 +96,7 @@ public class Board {
 
     private Image[] pieceImages() {
         try {
-            BufferedImage imagePieces = ImageIO.read(new File("C:\\Users\\kaiov\\IdeaProjects\\ChessGame\\src\\chess.png"));
+            BufferedImage imagePieces = ImageIO.read(new File(CHESS_FILE_PATH));
             Image[] images = new Image[12];
             int index = 0;
             for (int y = 0; y < 400; y += 200) {
@@ -117,14 +114,17 @@ public class Board {
     private void drawPosition(Map<ArrayList<Integer>, Piece> positionMap, Graphics g) {
         positionMap.forEach((k, v) -> {
                     if (v != null)
-                        g.drawImage(this.images[v.getImageIndex()], k.get(1) * this.scale, k.get(0) * this.scale, this.panel);
+                        g.drawImage(this.images[v.getImageIndex()],
+                                k.get(1) * this.scale,
+                                k.get(0) * this.scale,
+                                this.panel);
                 }
         );
     }
 
     private Image movesCircle() {
         try {
-            Image image = ImageIO.read(new File("C:\\Users\\kaiov\\IdeaProjects\\ChessGame\\src\\circle.png"));
+            Image image = ImageIO.read(new File(CIRCLE_FILE_PATH));
             image = image.getScaledInstance(this.scale / 2, this.scale / 2, BufferedImage.SCALE_SMOOTH);
             return image;
         } catch (IOException e) {
@@ -132,8 +132,19 @@ public class Board {
         }
     }
 
-    private void drawRealValidMoves(ArrayList<Integer> realValidMove, Graphics g) {
-        g.drawImage(movesCircle(), (realValidMove.get(1)) * this.scale + (this.scale / 4), realValidMove.get(0) * this.scale + (this.scale / 4), this.panel);
+    private void highlightRealValidMoves(ArrayList<Integer> realValidMove, Graphics g) {
+        g.drawImage(movesCircle(),
+                (realValidMove.get(1)) * this.scale + (this.scale / 4),
+                realValidMove.get(0) * this.scale + (this.scale / 4),
+                this.panel);
+    }
+
+    private Map<ArrayList<Integer>, Piece> boardOrientation(Map<ArrayList<Integer>, Piece> position, boolean asWhite) {
+        if (asWhite) {
+            return position;
+        } else {
+            return rotateBoard(position);
+        }
     }
 
     private Map<ArrayList<Integer>, Piece> rotateBoard(Map<ArrayList<Integer>, Piece> position) {
@@ -142,6 +153,14 @@ public class Board {
             rotatedPosition.put(arrayListCoordinate(7 - k.get(0), 7 - k.get(1)), v);
         });
         return rotatedPosition;
+    }
+
+    private ArrayList<Integer> realValidMoveOrientation(ArrayList<Integer> realValidMove, boolean asWhite) {
+        if (asWhite) {
+            return realValidMove;
+        } else {
+            return rotateValidMoves(realValidMove);
+        }
     }
 
     private ArrayList<Integer> rotateValidMoves(ArrayList<Integer> validMoves) {

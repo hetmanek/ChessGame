@@ -8,7 +8,7 @@ public abstract class Piece {
     protected ArrayList<Integer> coordinate;
     protected final boolean isWhite;
     protected final PieceType type;
-    protected boolean moved = false;
+    protected boolean moved = false; //TODO DA MERDA 100% SE UM PEÃO FOR COLOCADO NO MEIO DA BOARD A PARTIR DE UM FEN
 
     public Piece(ArrayList<Integer> coordinate, boolean isWhite, PieceType type) {
         this.coordinate = coordinate;

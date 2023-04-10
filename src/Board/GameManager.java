@@ -64,26 +64,25 @@ public class GameManager {
         } else JOptionPane.showMessageDialog(frame, "invalid FEN");
     }
 
-    private boolean fenIsValid(String fen) {
+    private boolean fenIsValid(String fen) { //TODO RAGEX RUIM  N PASSA -> rnbq1bnr/pppppppp/3k4/8/8/4Q3/PPPPPPPP/RNB1KBNR b KQha - 0 1
         Pattern pattern = Pattern.compile("((([prnbqkPRNBQK12345678]*/){7})([prnbqkPRNBQK12345678]*)) (w|b) ((K?Q?k?q?)|\\-) (([abcdefgh][36])|\\-) (\\d*) (\\d*)");
         Matcher matcher = pattern.matcher(fen);
-        if (matcher.matches()) {    //CHECA SE O PADRAO BATE
+        if (matcher.matches()) {
             char[] fenArray = fen.toCharArray();
             int count1 = 0;
             int count2 = 0;
             for (char character : fenArray) {
-                if (47 < character && character < 58) {   // é um número
+                if (47 < character && character < 58) {
                     count1 = count1 + character - 48;
-                } else if (64 < character && character < 123) {   // é letra
+                } else if (64 < character && character < 123) {
                     count1++;
-                } else if (character == 47) {   //é uma /
+                } else if (character == 47) {
                     count2++;
-                } else if (count1 == 64 && count2 == 7) {   //CHECA NUMERO DE LINHAS E COLUNAS
-                    return matcher.group(1).contains("k") && matcher.group(1).contains("K");    //CHECA SE TEM 2 REIS
+                } else if (count1 == 64 && count2 == 7) {
+                    return matcher.group(1).contains("k") && matcher.group(1).contains("K");
                 } else break;
             }
         }
-        return false;
+        return true;
     }
 }
-

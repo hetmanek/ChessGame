@@ -9,8 +9,23 @@ public class King extends Piece {
         super(coordinate, isWhite, pieceType);
     }
 
+    private ArrayList<Boolean> castlingRights = new ArrayList<>() {
+        {
+            add(false);
+            add(false);
+        }
+    };
+
+    public void setCastlingRights(int index, boolean canCastle) {
+        this.castlingRights.set(index, canCastle);
+    }
+
+    public ArrayList<Boolean> getCastlingRights() {
+        return this.castlingRights;
+    }
+
     @Override
-    public ArrayList<ArrayList<Integer>> validMoves() {
+    public ArrayList<ArrayList<Integer>> validMoves() {//TODO DE REPENTE DA PRA FAZER MELHOR ESSES MOVES AQUI, TÁ MUITO MANUAL...
         ArrayList<ArrayList<Integer>> validMovesList = new ArrayList<>();
         Integer currentRow = this.getCoordinate().get(0);
         Integer currentColumn = this.getCoordinate().get(1);
@@ -71,6 +86,22 @@ public class King extends Piece {
                 add(currentColumn - k);
             }
         });
+        if (this.castlingRights.get(0)) {//ala da dama
+            validMovesList.add(new ArrayList<>() {
+                {
+                    add(currentRow);
+                    add(currentColumn - 2 * k);
+                }
+            });
+        }
+        if (this.castlingRights.get(1)) {//ala do rei
+            validMovesList.add(new ArrayList<>() {
+                {
+                    add(currentRow);
+                    add(currentColumn + 2 * k);
+                }
+            });
+        }
         return validMovesList;
     }
 }
