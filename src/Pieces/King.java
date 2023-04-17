@@ -20,73 +20,27 @@ public class King extends Piece {
         this.castlingRights.set(index, canCastle);
     }
 
-    public ArrayList<Boolean> getCastlingRights() {
-        return this.castlingRights;
-    }
-
     @Override
-    public ArrayList<ArrayList<Integer>> validMoves() {//TODO DE REPENTE DA PRA FAZER MELHOR ESSES MOVES AQUI, TÁ MUITO MANUAL...
+    public ArrayList<ArrayList<Integer>> validMoves() {
         ArrayList<ArrayList<Integer>> validMovesList = new ArrayList<>();
         Integer currentRow = this.getCoordinate().get(0);
         Integer currentColumn = this.getCoordinate().get(1);
         int k = this.isWhite() ? -1 : 1;
-        //N
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow + k);
-                add(currentColumn);
+
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                if (x == 0 && y == 0) continue;
+                int row = currentRow + x * k;
+                int column = currentColumn + y * k;
+                validMovesList.add(new ArrayList<>() {
+                    {
+                        add(row);
+                        add(column);
+                    }
+                });
             }
-        });
-        //NE
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow + k);
-                add(currentColumn + k);
-            }
-        });
-        //E
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow);
-                add(currentColumn + k);
-            }
-        });
-        //SE
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow - k);
-                add(currentColumn + k);
-            }
-        });
-        //S
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow - k);
-                add(currentColumn);
-            }
-        });
-        //SO
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow - k);
-                add(currentColumn - k);
-            }
-        });
-        //O
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow);
-                add(currentColumn - k);
-            }
-        });
-        //NO
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow + k);
-                add(currentColumn - k);
-            }
-        });
-        if (this.castlingRights.get(0)) {//ala da dama
+        }
+        if (this.castlingRights.get(0)) {
             validMovesList.add(new ArrayList<>() {
                 {
                     add(currentRow);
@@ -94,7 +48,7 @@ public class King extends Piece {
                 }
             });
         }
-        if (this.castlingRights.get(1)) {//ala do rei
+        if (this.castlingRights.get(1)) {
             validMovesList.add(new ArrayList<>() {
                 {
                     add(currentRow);

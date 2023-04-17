@@ -10,67 +10,24 @@ public class Knight extends Piece {
     }
 
     @Override
-    public ArrayList<ArrayList<Integer>> validMoves() {//TODO DE REPENTE DA PRA FAZER MELHOR ESSES MOVES AQUI, TÁ MUITO MANUAL...
+    public ArrayList<ArrayList<Integer>> validMoves() {
         ArrayList<ArrayList<Integer>> validMovesList = new ArrayList<>();
         Integer currentRow = this.getCoordinate().get(0);
         Integer currentColumn = this.getCoordinate().get(1);
-        int k = this.isWhite() ? -1 : 1;
-        //frente direita
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow + (2 * k));
-                add(currentColumn + k);
+        for (int row = -2; row <= 2; row++) {
+            for (int column = -2; column <= 2; column++) {
+                if (Math.abs(row) + Math.abs(column) == 3) {
+                    int finalRow = row;
+                    int finalColumn = column;
+                    validMovesList.add(new ArrayList<>() {
+                        {
+                            add(currentRow + finalRow);
+                            add(currentColumn + finalColumn);
+                        }
+                    });
+                }
             }
-        });
-        //frente esquerda
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow + (2 * k));
-                add(currentColumn - k);
-            }
-        });
-        //direita frente
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow + k);
-                add(currentColumn + (2 * k));
-            }
-        });
-        //direita trás
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow - k);
-                add(currentColumn + (2 * k));
-            }
-        });
-        //esquerda frente
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow + k);
-                add(currentColumn - (2 * k));
-            }
-        });
-        //esquerda trás
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow - k);
-                add(currentColumn - (2 * k));
-            }
-        });
-        //trás direita
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow - (2 * k));
-                add(currentColumn + k);
-            }
-        });
-        //trás esquerda
-        validMovesList.add(new ArrayList<>() {
-            {
-                add(currentRow - (2 * k));
-                add(currentColumn - k);
-            }
-        });
+        }
         return validMovesList;
     }
 }

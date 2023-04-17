@@ -50,7 +50,7 @@ public class GameManager {
     }
 
     private void startByFEN(ActionEvent e) {
-        if (fenIsValid(chooseFENText.getText())) {
+        if (isValidFen(chooseFENText.getText())) {
             int option = JOptionPane.showOptionDialog(frame,
                     "Choose your color",
                     "Valid FEN!!",
@@ -64,25 +64,25 @@ public class GameManager {
         } else JOptionPane.showMessageDialog(frame, "invalid FEN");
     }
 
-    private boolean fenIsValid(String fen) { //TODO RAGEX RUIM  N PASSA -> rnbq1bnr/pppppppp/3k4/8/8/4Q3/PPPPPPPP/RNB1KBNR b KQha - 0 1
-        Pattern pattern = Pattern.compile("((([prnbqkPRNBQK12345678]*/){7})([prnbqkPRNBQK12345678]*)) (w|b) ((K?Q?k?q?)|\\-) (([abcdefgh][36])|\\-) (\\d*) (\\d*)");
+    private boolean isValidFen(String fen) {
+        Pattern pattern = Pattern.compile("^(([pnbrqk1-8]{1,8}/){7}[pnbrqk1-8]{1,8}) (w|b) ((K?Q?k?q?){1,4}|-) (([abcdefgh][1-8])|-) (\\d+) (\\d+)$", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(fen);
         if (matcher.matches()) {
             char[] fenArray = fen.toCharArray();
-            int count1 = 0;
-            int count2 = 0;
+            int squereCount = 0;
+            int rowCount = 0;
             for (char character : fenArray) {
                 if (47 < character && character < 58) {
-                    count1 = count1 + character - 48;
+                    squereCount += character - 48;
                 } else if (64 < character && character < 123) {
-                    count1++;
+                    squereCount++;
                 } else if (character == 47) {
-                    count2++;
-                } else if (count1 == 64 && count2 == 7) {
+                    rowCount++;
+                } else if (squereCount == 64 && rowCount == 7) {
                     return matcher.group(1).contains("k") && matcher.group(1).contains("K");
-                } else break;
+                }
             }
         }
-        return true;
+        return false;
     }
 }

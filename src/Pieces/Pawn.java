@@ -3,11 +3,13 @@ package Pieces;
 import enums.PieceType;
 
 import java.util.ArrayList;
-
+import java.util.Objects;
 
 public class Pawn extends Piece {
+
     public Pawn(ArrayList<Integer> coordinate, boolean isWhite, PieceType pieceType) {
         super(coordinate, isWhite, pieceType);
+        if (Objects.equals(coordinate.get(0), getInitialRow())) this.moved = true;
     }
 
     @Override
@@ -16,7 +18,7 @@ public class Pawn extends Piece {
         Integer currentRow = this.getCoordinate().get(0);
         Integer currentColumn = this.getCoordinate().get(1);
         int k = this.isWhite() ? -1 : 1;
-        if (!this.hasMoved()) { //2 para frente
+        if (!this.hasMoved()) {
             validMovesList.add(new ArrayList<>() {
                 {
                     add(currentRow + (2 * k));
@@ -24,21 +26,18 @@ public class Pawn extends Piece {
                 }
             });
         }
-        //1 para frente
         validMovesList.add(new ArrayList<>() {
             {
                 add(currentRow + k);
                 add(currentColumn);
             }
         });
-        //kill move direita
         validMovesList.add(new ArrayList<>() {
             {
                 add(currentRow + k);
                 add(currentColumn + k);
             }
         });
-        //kill move esquerda
         validMovesList.add(new ArrayList<>() {
             {
                 add(currentRow + k);
@@ -46,5 +45,9 @@ public class Pawn extends Piece {
             }
         });
         return validMovesList;
+    }
+
+    private Integer getInitialRow() {
+        return this.isWhite ? 1 : 6;
     }
 }
