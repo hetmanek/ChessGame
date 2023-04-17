@@ -38,7 +38,6 @@ public class Board {
         this.panel = new JPanel() {
             @Override
             public void paint(Graphics g) {
-                System.out.println("kkkk");
                 squareColor(g);
                 drawPosition(boardOrientation(position.getPositionMap(), asWhite), g);
             }
