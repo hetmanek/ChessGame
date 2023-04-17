@@ -11,7 +11,6 @@ public class Position {
     private boolean isWhiteTurn;
     private int move = 0;
     private int halfmove;
-    private int fullmove; //todo pra q?
     private ArrayList<Integer> whiteKingCoordinate;
     private ArrayList<Integer> blackKingCoordinate;
 
@@ -48,8 +47,6 @@ public class Position {
                 }
             } else if (fenField == 4) {
                 this.halfmove = charToInt(character);
-            } else if (fenField == 5) {
-                this.fullmove = charToInt(character);
             }
         }
     }
@@ -121,7 +118,6 @@ public class Position {
         if (this.halfmove == 100) Board.draw();
         this.isWhiteTurn = !this.isWhiteTurn;
         this.move++;
-        if (!piece.isWhite()) this.fullmove++;
     }
 
     private void gameOver(boolean isWhite) {
@@ -141,31 +137,7 @@ public class Position {
         }
     }
 
-//    public ArrayList<ArrayList<Integer>> positionValidMoves(Piece piece, Map<ArrayList<Integer>, Piece> positionMap, boolean flag) { //TODO NÃO SEI TIRAR ESSE FLAG AAAA
-//        ArrayList<ArrayList<Integer>> validMoves = new ArrayList<>(piece.validMoves());
-//
-//        validMoves.removeIf(this::isOutOfBounds);
-//        validMoves.removeIf(destination -> isAnAlliedPiece(piece, destination, positionMap));
-//
-//        if (piece.getClass() != Knight.class)
-//            validMoves.removeIf(destination -> hasPieceBetween(piece.getCoordinate(), destination, positionMap));
-//
-//        if (piece.getClass() == Pawn.class)
-//            validMoves.removeIf(destination -> pawnConstraint(piece.getCoordinate(), destination, positionMap));
-//
-//        if (piece.getClass() == King.class)
-//            validMoves.removeIf(destination -> kingConstraint(piece, destination, positionMap));
-//
-//        else if (!flag) validMoves.removeIf(destination -> kingIsPinned(piece, destination, positionMap));
-//
-//        if (!flag && isKingInCheck(piece.isWhite(), positionMap))
-//            validMoves.removeIf(destination -> !moveResolvesCheck(piece, destination, positionMap));
-//
-//        return validMoves;
-//    }
-
-
-    public ArrayList<ArrayList<Integer>> positionValidMoves(Piece piece, Map<ArrayList<Integer>, Piece> positionMap, boolean flag) { //TODO NÃO SEI TIRAR ESSE FLAG AAAA
+    public ArrayList<ArrayList<Integer>> positionValidMoves(Piece piece, Map<ArrayList<Integer>, Piece> positionMap, boolean flag) {
         ArrayList<ArrayList<Integer>> validMoves = new ArrayList<>(piece.validMoves());
 
         validMoves.removeIf(destination -> moveIsUnavailable(piece, destination, positionMap, flag));
@@ -189,7 +161,6 @@ public class Position {
 
         return false;
     }
-
 
     private boolean isAnAlliedPiece(Piece piece, ArrayList<Integer> destination, Map<ArrayList<Integer>, Piece> positionMap) {
         return getPieceAt(destination, positionMap) != null && piece.isWhite() == getPieceAt(destination, positionMap).isWhite();
